@@ -11,8 +11,6 @@ use crate::AppState;
 pub struct NewPost {
     name: String,
     order: i32,
-    #[field(default = false)]
-    is_finish: bool,
 }
 
 #[get("/")]
@@ -26,8 +24,8 @@ pub fn posts(state: &State<AppState>) -> Template {
 pub fn create_post(state: &State<AppState>, form: Form<NewPost>) -> Redirect {
     let db = state.db.lock().unwrap();
 
-    let post = Post::new(form.name.clone(), form.order, form.is_finish);
-    let _ = post.insert(db.conn());
+    let post = Post::new(form.name.clone(), form.order);
+    post.insert(db.conn()).unwrap();
 
     Redirect::to("/admin/posts")
 }
@@ -35,7 +33,7 @@ pub fn create_post(state: &State<AppState>, form: Form<NewPost>) -> Redirect {
 #[get("/<id>/delete")]
 pub fn delete_post(state: &State<AppState>, id: &str) -> Redirect {
     let db = state.db.lock().unwrap();
-    let _ = Post::delete(db.conn(), id);
+    Post::delete(db.conn(), id).unwrap();
     Redirect::to("/admin/posts")
 }
 

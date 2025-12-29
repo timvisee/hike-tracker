@@ -49,31 +49,21 @@ pub fn record_scan(state: &State<AppState>, group_id: &str, form: Form<ScanForm>
         return Redirect::to("/");
     }
 
-    let post = match Post::get_by_id(db.conn(), &form.post_id).ok().flatten() {
-        Some(p) => p,
-        None => return Redirect::to(format!("/scan/{}", group_id)),
-    };
-
-    if post.is_finish {
-        // Finish post: set group finish time
-        let _ = Group::set_finish_time(db.conn(), group_id, Utc::now());
-    } else {
-        // Regular post: toggle arrival/departure
-        match Scan::get_by_group_and_post(db.conn(), group_id, &form.post_id)
-            .ok()
-            .flatten()
-        {
-            Some(scan) => {
-                // Already arrived, record departure
-                if scan.departure_time.is_none() {
-                    let _ = Scan::set_departure_time(db.conn(), &scan.id, Utc::now());
-                }
+    // Regular post: toggle arrival/departure
+    match Scan::get_by_group_and_post(db.conn(), group_id, &form.post_id)
+        .ok()
+        .flatten()
+    {
+        Some(scan) => {
+            // Already arrived, record departure
+            if scan.departure_time.is_none() {
+                let _ = Scan::set_departure_time(db.conn(), &scan.id, Utc::now());
             }
-            None => {
-                // First scan, record arrival
-                let scan = Scan::new(group_id.to_string(), form.post_id.clone());
-                let _ = scan.insert(db.conn());
-            }
+        }
+        None => {
+            // First scan, record arrival
+            let scan = Scan::new(group_id.to_string(), form.post_id.clone());
+            let _ = scan.insert(db.conn());
         }
     }
 

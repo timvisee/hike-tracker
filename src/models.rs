@@ -17,7 +17,6 @@ pub struct Post {
     pub id: String,
     pub name: String,
     pub order: i32,
-    pub is_finish: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -137,42 +136,33 @@ impl Group {
 }
 
 impl Post {
-    pub fn new(name: String, order: i32, is_finish: bool) -> Self {
+    pub fn new(name: String, order: i32) -> Self {
         Post {
             id: Uuid::new_v4().to_string(),
             name,
             order,
-            is_finish,
             created_at: Utc::now(),
         }
     }
 
     pub fn insert(&self, conn: &Connection) -> Result<()> {
         conn.execute(
-            "INSERT INTO posts (id, name, post_order, is_finish, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-            params![
-                self.id,
-                self.name,
-                self.order,
-                self.is_finish as i32,
-                self.created_at.to_rfc3339(),
-            ],
+            "INSERT INTO posts (id, name, post_order, created_at) VALUES (?1, ?2, ?3, ?4)",
+            params![self.id, self.name, self.order, self.created_at.to_rfc3339(),],
         )?;
         Ok(())
     }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Post>> {
         let mut stmt = conn.prepare(
-            "SELECT id, name, post_order, is_finish, created_at FROM posts ORDER BY post_order ASC",
+            "SELECT id, name, post_order, created_at FROM posts ORDER BY post_order ASC",
         )?;
         let posts = stmt.query_map([], |row| {
-            let created_at: String = row.get(4)?;
-            let is_finish: i32 = row.get(3)?;
+            let created_at: String = row.get(3)?;
             Ok(Post {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 order: row.get(2)?,
-                is_finish: is_finish != 0,
                 created_at: DateTime::parse_from_rfc3339(&created_at)
                     .unwrap()
                     .with_timezone(&Utc),
@@ -182,18 +172,15 @@ impl Post {
     }
 
     pub fn get_by_id(conn: &Connection, id: &str) -> Result<Option<Post>> {
-        let mut stmt = conn.prepare(
-            "SELECT id, name, post_order, is_finish, created_at FROM posts WHERE id = ?1",
-        )?;
+        let mut stmt =
+            conn.prepare("SELECT id, name, post_order, created_at FROM posts WHERE id = ?1")?;
         let mut rows = stmt.query(params![id])?;
         if let Some(row) = rows.next()? {
-            let created_at: String = row.get(4)?;
-            let is_finish: i32 = row.get(3)?;
+            let created_at: String = row.get(3)?;
             Ok(Some(Post {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 order: row.get(2)?,
-                is_finish: is_finish != 0,
                 created_at: DateTime::parse_from_rfc3339(&created_at)
                     .unwrap()
                     .with_timezone(&Utc),

@@ -47,7 +47,9 @@
                 <td>
                     <a href="/admin/groups/{{ group.id }}/delete" class="btn btn-danger" onclick="return confirm('Delete this group?')">Delete</a>
                     {% if not group.start_time %}
-                    <a href="/admin/groups/{{ group.id }}/start_timer" class="btn btn-success" onclick="return confirm('Start this groups timer?')">Start</a>
+                        <a href="/admin/groups/{{ group.id }}/start_timer" class="btn btn-success" onclick="return confirm('Start this groups timer?')">Start</a>
+                    {% elif not group.finish_time %}
+                        <a href="/admin/groups/{{ group.id }}/stop_timer" class="btn btn-warning" onclick="return confirm('Stop this groups timer?')">Finish</a>
                     {% endif %}
                 </td>
             </tr>

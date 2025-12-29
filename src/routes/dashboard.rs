@@ -67,7 +67,6 @@ pub fn group_detail_page(state: &State<AppState>, id: &str) -> Result<Template, 
 fn group_detail(group: Group, scans: &[Scan], posts: Vec<Post>) -> GroupDetail {
     let post_scans: Vec<PostScanInfo> = posts
         .into_iter()
-        .filter(|p| !p.is_finish)
         .map(|post| {
             let scan = scans.iter().find(|s| s.post_id == post.id).cloned();
             let idle_time = scan

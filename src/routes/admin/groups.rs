@@ -47,6 +47,13 @@ pub fn start_group_timer(state: &State<AppState>, id: &str) -> Redirect {
     Redirect::to("/admin/groups")
 }
 
+#[get("/<id>/stop_timer")]
+pub fn stop_group_timer(state: &State<AppState>, id: &str) -> Redirect {
+    let db = state.db.lock().unwrap();
+    let _ = Group::set_finish_time(db.conn(), id, Utc::now());
+    Redirect::to("/admin/groups")
+}
+
 #[get("/<id>/qr")]
 pub fn group_qr(_state: &State<AppState>, id: &str) -> (ContentType, Vec<u8>) {
     let url = format!("/scan/{}", id);
@@ -73,6 +80,7 @@ pub fn routes() -> Vec<Route> {
         groups,
         create_group,
         start_group_timer,
+        stop_group_timer,
         delete_group,
         group_qr
     ]
