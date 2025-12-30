@@ -24,7 +24,7 @@
             {% for gs in group_stats %}
             <tr>
                 <td>{{ gs.group.name }}</td>
-                <td>{{ gs.post_scans | length }} / {{ total_posts }}</td>
+                <td>{{ gs.post_scans | filter(attribute="scan") | length }} / {{ total_posts }}</td>
                 <td>
                     {% if gs.total_time %}
                     {{ gs.total_time.0 | date(format="%H:%M") }}
