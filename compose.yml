@@ -1,0 +1,15 @@
+services:
+  hike-tracker:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:8888"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ROCKET_SECRET_KEY=${ROCKET_SECRET_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ROCKET_DATABASES={sqlite_db={url="data/hike_tracker.db"}}
+
+volumes:
+  hike-data:
