@@ -3,8 +3,7 @@
 {% block title %}{{ post.name }} - Post Overzicht{% endblock %}
 
 {% block content %}
-<h1>{{ post.name }}</h1>
-<p style="color: #666; margin-bottom: 1.5rem;">Post #{{ post.post_order }}</p>
+<h1>Post {{post.post_order}}: {{ post.name }}</h1>
 
 <div class="card">
     <h2>Nu op de Post ({{ groups_at_post | length }})</h2>

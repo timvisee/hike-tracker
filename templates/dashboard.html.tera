@@ -15,7 +15,7 @@
                 <th>Groep</th>
                 <th>Status</th>
                 {% for post in posts %}
-                    <th><a href="/post/{{ post.id }}" style="color: inherit;">{{ post.name }}</a></th>
+                    <th><a href="/post/{{ post.id }}" style="color: inherit;">Post {{ post.post_order }}</a></th>
                 {% endfor %}
                 <th>Totale Tijd</th>
                 <th>Looptijd</th>
