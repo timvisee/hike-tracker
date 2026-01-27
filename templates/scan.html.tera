@@ -23,6 +23,12 @@
     {% endif %}
 </div>
 
+{% if not is_admin and emergency_info %}
+<div class="card" style="background: #fff3cd; border: 1px solid #ffc107;">
+    <p style="margin: 0;"><strong>Noodinfo:</strong> {{ emergency_info }}</p>
+</div>
+{% endif %}
+
 <div class="card">
     <div class="table-wrapper">
     <table>

@@ -147,6 +147,7 @@ pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) 
 
     let next_action = get_next_action(&group, &posts, &scans);
     let stats = calculate_stats(&group, &posts, &scans);
+    let emergency_info = std::env::var("EMERGENCY_INFO").ok();
 
     Template::render(
         "scan",
@@ -157,6 +158,7 @@ pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) 
             is_admin: is_admin,
             next_action: next_action,
             stats: stats,
+            emergency_info: emergency_info,
         },
     )
 }
