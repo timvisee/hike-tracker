@@ -459,6 +459,36 @@ pub async fn update_group(
     Redirect::to(format!("/scan/{}/edit", group_id))
 }
 
+#[derive(FromForm)]
+pub struct UpdateGroupDetailsForm {
+    name: String,
+    scout_group: String,
+    members: String,
+    phone_number: String,
+}
+
+#[post("/<group_id>/edit/group/details", data = "<form>")]
+pub async fn update_group_details(
+    _admin: Admin,
+    conn: DbConn,
+    group_id: String,
+    form: Form<UpdateGroupDetailsForm>,
+) -> Redirect {
+    let gid = group_id.clone();
+    let name = form.name.clone();
+    let scout_group = form.scout_group.clone();
+    let members = form.members.clone();
+    let phone_number = form.phone_number.clone();
+
+    conn.run(move |c| {
+        Group::update_details(c, &gid, &name, &scout_group, &members, &phone_number)
+    })
+    .await
+    .ok();
+
+    Redirect::to(format!("/scan/{}/edit", group_id))
+}
+
 pub fn routes() -> Vec<Route> {
     routes![
         scan_page,
@@ -468,6 +498,7 @@ pub fn routes() -> Vec<Route> {
         update_scan,
         delete_scan,
         add_scan,
-        update_group
+        update_group,
+        update_group_details
     ]
 }

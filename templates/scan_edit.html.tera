@@ -3,7 +3,30 @@
 {% block title %}Scans Bewerken - {{ group.name }} - Hike Tracker{% endblock %}
 
 {% block content %}
-<h1>Scans Bewerken: {{ group.name }}</h1>
+<h1>Bewerken: {{ group.name }}</h1>
+
+<div class="card">
+    <h2>Groep Gegevens</h2>
+    <form action="/scan/{{ group.id }}/edit/group/details" method="post">
+        <div>
+            <label for="name">Groepsnaam</label>
+            <input type="text" id="name" name="name" value="{{ group.name }}" required>
+        </div>
+        <div>
+            <label for="scout_group">Speltak</label>
+            <input type="text" id="scout_group" name="scout_group" value="{{ group.scout_group }}" required>
+        </div>
+        <div>
+            <label for="members">Leden</label>
+            <textarea id="members" name="members">{{ group.members }}</textarea>
+        </div>
+        <div>
+            <label for="phone_number">Telefoonnummer</label>
+            <input type="tel" id="phone_number" name="phone_number" value="{{ group.phone_number }}">
+        </div>
+        <button type="submit" class="btn-success">Opslaan</button>
+    </form>
+</div>
 
 <div class="card">
     <h2>Huidige Scans</h2>

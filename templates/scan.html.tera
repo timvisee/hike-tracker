@@ -14,6 +14,9 @@
     {% if group.phone_number %}
     <p><strong>Telefoon:</strong> {{ group.phone_number }}</p>
     {% endif %}
+    {% if is_admin %}
+    <p style="margin-top: 1rem;"><a href="/scan/{{ group.id }}/edit" class="btn">Bewerken</a></p>
+    {% endif %}
 </div>
 
 <div class="card">

@@ -126,6 +126,24 @@ impl Group {
             .set(groups::finish_time.eq(None::<NaiveDateTime>))
             .execute(conn)
     }
+
+    pub fn update_details(
+        conn: &mut SqliteConnection,
+        group_id: &str,
+        name: &str,
+        scout_group: &str,
+        members: &str,
+        phone_number: &str,
+    ) -> QueryResult<usize> {
+        diesel::update(groups::table.filter(groups::id.eq(group_id)))
+            .set((
+                groups::name.eq(name),
+                groups::scout_group.eq(scout_group),
+                groups::members.eq(members),
+                groups::phone_number.eq(phone_number),
+            ))
+            .execute(conn)
+    }
 }
 
 // ============ POST MODELS ============
