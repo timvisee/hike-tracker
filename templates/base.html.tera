@@ -199,6 +199,7 @@
     <nav>
         <a href="/dashboard">Overzicht</a>
         {% if is_admin %}
+        <a href="/ranking">Ranglijst</a>
         <a href="/admin/groups">Groepen</a>
         <a href="/admin/posts">Posten</a>
         <a href="/logout" style="margin-left: auto;">Uitloggen</a>

@@ -1,0 +1,71 @@
+{% extends "base" %}
+
+{% block title %}Ranglijst - Hike Tracker{% endblock %}
+
+{% block content %}
+<h1>Ranglijst</h1>
+
+<div class="card">
+    <h2>Sorteer op</h2>
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <a href="/ranking?sort=total" class="btn {% if sort_by == 'total' %}btn-success{% endif %}">Totale Tijd</a>
+        <a href="/ranking?sort=walking" class="btn {% if sort_by == 'walking' %}btn-success{% endif %}">Looptijd</a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>
+        {% if sort_by == "walking" %}
+        Ranglijst op Looptijd
+        {% else %}
+        Ranglijst op Totale Tijd
+        {% endif %}
+    </h2>
+    {% if ranked_groups | length > 0 %}
+    <div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Groep</th>
+                <th>Speltak</th>
+                <th>Totale Tijd</th>
+                <th>Looptijd</th>
+                <th>Wachttijd</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rg in ranked_groups %}
+            <tr>
+                <td>
+                    {% if rg.rank == 1 %}
+                    <span style="font-size: 1.5rem;">🥇</span>
+                    {% elif rg.rank == 2 %}
+                    <span style="font-size: 1.5rem;">🥈</span>
+                    {% elif rg.rank == 3 %}
+                    <span style="font-size: 1.5rem;">🥉</span>
+                    {% else %}
+                    {{ rg.rank }}
+                    {% endif %}
+                </td>
+                <td>{{ rg.group.name }}</td>
+                <td>{{ rg.group.scout_group }}</td>
+                <td>{% if rg.total_time %}{{ rg.total_time }}{% else %}-{% endif %}</td>
+                <td>{% if rg.walking_time %}{{ rg.walking_time }}{% else %}-{% endif %}</td>
+                <td>{{ rg.idle_time }}</td>
+                <td><a href="/scan/{{ rg.group.id }}" class="btn">Details</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p style="color: #666;">Nog geen groepen hebben de tocht voltooid.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="/dashboard" class="btn">Terug naar Overzicht</a>
+</div>
+{% endblock %}

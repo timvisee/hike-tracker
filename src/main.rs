@@ -42,4 +42,5 @@ fn rocket() -> _ {
         .mount("/scan", routes::scan::routes())
         .mount("/dashboard", routes::dashboard::routes())
         .mount("/post", routes::post::routes())
+        .mount("/ranking", routes::ranking::routes())
 }
