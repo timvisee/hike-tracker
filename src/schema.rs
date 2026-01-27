@@ -10,6 +10,8 @@ diesel::table! {
         start_time -> Nullable<Timestamp>,
         finish_time -> Nullable<Timestamp>,
         created_at -> Timestamp,
+        group_number -> Integer,
+        route -> Text,
     }
 }
 

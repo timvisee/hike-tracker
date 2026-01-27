@@ -12,7 +12,9 @@
     <table>
         <thead>
             <tr>
+                <th>#</th>
                 <th>Groep</th>
+                <th>Route</th>
                 <th>Status</th>
                 {% for post in posts %}
                 {% if is_admin %}
@@ -32,7 +34,9 @@
         <tbody>
             {% for gs in group_stats %}
             <tr>
+                <td>{{ gs.group.group_number }}</td>
                 <td>{{ gs.group.scout_group }}: {{gs.group.name }}</td>
+                <td>{{ gs.group.route }}</td>
                 <td>
                     {% if gs.group.finish_time %}
                         <span class="status-badge status-finished">Voltooid</span>

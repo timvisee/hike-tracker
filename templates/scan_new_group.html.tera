@@ -9,12 +9,20 @@
     <h2>Groep Aanmaken</h2>
     <form action="/scan/{{ group_id }}/create" method="post">
         <div>
+            <label for="group_number">Groepsnummer</label>
+            <input type="number" id="group_number" name="group_number" required value="0" min="0">
+        </div>
+        <div>
             <label for="name">Groepsnaam</label>
             <input type="text" id="name" name="name" required placeholder="bijv. Team Alpha">
         </div>
         <div>
             <label for="scout_group">Speltak</label>
             <input type="text" id="scout_group" name="scout_group" required placeholder="bijv. Scouting Voorbeeld">
+        </div>
+        <div>
+            <label for="route">Route</label>
+            <input type="text" id="route" name="route" placeholder="bijv. Route A">
         </div>
         <div>
             <label for="members">Leden</label>

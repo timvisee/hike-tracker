@@ -248,6 +248,8 @@ pub struct NewGroupForm {
     scout_group: String,
     members: String,
     phone_number: String,
+    group_number: i32,
+    route: String,
 }
 
 #[post("/<group_id>/create", data = "<form>")]
@@ -260,10 +262,13 @@ pub async fn create_group_from_scan(
     let scout_group = form.scout_group.clone();
     let members = form.members.clone();
     let phone_number = form.phone_number.clone();
+    let group_number = form.group_number;
+    let route = form.route.clone();
     let gid = group_id.clone();
     let result = conn
         .run(move |c| {
-            let group = NewGroup::new_with_id(gid, name, scout_group, members, phone_number);
+            let group =
+                NewGroup::new_with_id(gid, name, scout_group, members, phone_number, group_number, route);
             Group::insert(c, group)
         })
         .await;
@@ -465,6 +470,8 @@ pub struct UpdateGroupDetailsForm {
     scout_group: String,
     members: String,
     phone_number: String,
+    group_number: i32,
+    route: String,
 }
 
 #[post("/<group_id>/edit/group/details", data = "<form>")]
@@ -479,9 +486,20 @@ pub async fn update_group_details(
     let scout_group = form.scout_group.clone();
     let members = form.members.clone();
     let phone_number = form.phone_number.clone();
+    let group_number = form.group_number;
+    let route = form.route.clone();
 
     conn.run(move |c| {
-        Group::update_details(c, &gid, &name, &scout_group, &members, &phone_number)
+        Group::update_details(
+            c,
+            &gid,
+            &name,
+            &scout_group,
+            &members,
+            &phone_number,
+            group_number,
+            &route,
+        )
     })
     .await
     .ok();

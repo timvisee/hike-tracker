@@ -1,0 +1,2 @@
+-- SQLite doesn't support DROP COLUMN directly
+-- This would require recreating the table

@@ -9,12 +9,20 @@
     <h2>Groep Gegevens</h2>
     <form action="/scan/{{ group.id }}/edit/group/details" method="post">
         <div>
+            <label for="group_number">Groepsnummer</label>
+            <input type="number" id="group_number" name="group_number" value="{{ group.group_number }}" required min="0">
+        </div>
+        <div>
             <label for="name">Groepsnaam</label>
             <input type="text" id="name" name="name" value="{{ group.name }}" required>
         </div>
         <div>
             <label for="scout_group">Speltak</label>
             <input type="text" id="scout_group" name="scout_group" value="{{ group.scout_group }}" required>
+        </div>
+        <div>
+            <label for="route">Route</label>
+            <input type="text" id="route" name="route" value="{{ group.route }}">
         </div>
         <div>
             <label for="members">Leden</label>

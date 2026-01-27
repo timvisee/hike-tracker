@@ -27,8 +27,10 @@
         <thead>
             <tr>
                 <th>#</th>
+                <th>Nr</th>
                 <th>Groep</th>
                 <th>Speltak</th>
+                <th>Route</th>
                 <th>Totale Tijd</th>
                 <th>Looptijd</th>
                 <th>Wachttijd</th>
@@ -49,8 +51,10 @@
                     {{ rg.rank }}
                     {% endif %}
                 </td>
+                <td>{{ rg.group.group_number }}</td>
                 <td>{{ rg.group.name }}</td>
                 <td>{{ rg.group.scout_group }}</td>
+                <td>{{ rg.group.route }}</td>
                 <td>{% if rg.total_time %}{{ rg.total_time }}{% else %}-{% endif %}</td>
                 <td>{% if rg.walking_time %}{{ rg.walking_time }}{% else %}-{% endif %}</td>
                 <td>{{ rg.idle_time }}</td>

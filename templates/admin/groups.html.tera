@@ -11,10 +11,10 @@
     <table>
         <thead>
             <tr>
+                <th>#</th>
                 <th>Naam</th>
                 <th>Speltak</th>
-                <th>Deelnemers</th>
-                <th>Telefoon</th>
+                <th>Route</th>
                 <th>Starttijd</th>
                 <th>Status</th>
                 <th>QR Code</th>
@@ -24,10 +24,10 @@
         <tbody>
             {% for group in groups %}
             <tr>
+                <td>{{ group.group_number }}</td>
                 <td>{{ group.name }}</td>
                 <td>{{ group.scout_group }}</td>
-                <td>{{ group.members }}</td>
-                <td>{{ group.phone_number }}</td>
+                <td>{{ group.route }}</td>
                 <td>{% if group.start_time %}{{ group.start_time | date(format="%H:%M:%S") }}{% else %}-{% endif %}</td>
                 <td>
                     {% if group.finish_time %}

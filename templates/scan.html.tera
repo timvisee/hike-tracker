@@ -6,8 +6,12 @@
 <h1>{{ group.scout_group }}: {{ group.name }}</h1>
 
 <div class="card">
+    <p><strong>Groepsnummer:</strong> {{ group.group_number }}</p>
     <p><strong>Groepsnaam:</strong> {{ group.name }}</p>
     <p><strong>Speltak:</strong> {{ group.scout_group }}</p>
+    {% if group.route %}
+    <p><strong>Route:</strong> {{ group.route }}</p>
+    {% endif %}
     {% if group.members %}
     <p><strong>Leden:</strong> {{ group.members }}</p>
     {% endif %}

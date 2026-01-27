@@ -19,6 +19,8 @@ pub struct Group {
     pub start_time: Option<NaiveDateTime>,
     pub finish_time: Option<NaiveDateTime>,
     pub created_at: NaiveDateTime,
+    pub group_number: i32,
+    pub route: String,
 }
 
 #[derive(Debug, Insertable)]
@@ -32,10 +34,19 @@ pub struct NewGroup {
     pub start_time: Option<NaiveDateTime>,
     pub finish_time: Option<NaiveDateTime>,
     pub created_at: NaiveDateTime,
+    pub group_number: i32,
+    pub route: String,
 }
 
 impl NewGroup {
-    pub fn new(name: String, scout_group: String, members: String, phone_number: String) -> Self {
+    pub fn new(
+        name: String,
+        scout_group: String,
+        members: String,
+        phone_number: String,
+        group_number: i32,
+        route: String,
+    ) -> Self {
         NewGroup {
             id: Uuid::new_v4().to_string(),
             name,
@@ -45,6 +56,8 @@ impl NewGroup {
             start_time: None,
             finish_time: None,
             created_at: chrono::Utc::now().naive_utc(),
+            group_number,
+            route,
         }
     }
 
@@ -54,6 +67,8 @@ impl NewGroup {
         scout_group: String,
         members: String,
         phone_number: String,
+        group_number: i32,
+        route: String,
     ) -> Self {
         NewGroup {
             id,
@@ -64,6 +79,8 @@ impl NewGroup {
             start_time: None,
             finish_time: None,
             created_at: chrono::Utc::now().naive_utc(),
+            group_number,
+            route,
         }
     }
 }
@@ -77,7 +94,7 @@ impl Group {
 
     pub fn get_all(conn: &mut SqliteConnection) -> QueryResult<Vec<Group>> {
         groups::table
-            .order(groups::created_at.desc())
+            .order((groups::group_number.desc(), groups::created_at.asc()))
             .load::<Group>(conn)
     }
 
@@ -134,6 +151,8 @@ impl Group {
         scout_group: &str,
         members: &str,
         phone_number: &str,
+        group_number: i32,
+        route: &str,
     ) -> QueryResult<usize> {
         diesel::update(groups::table.filter(groups::id.eq(group_id)))
             .set((
@@ -141,6 +160,8 @@ impl Group {
                 groups::scout_group.eq(scout_group),
                 groups::members.eq(members),
                 groups::phone_number.eq(phone_number),
+                groups::group_number.eq(group_number),
+                groups::route.eq(route),
             ))
             .execute(conn)
     }
