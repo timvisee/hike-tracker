@@ -29,17 +29,19 @@
             <tr>
                 <th>Volgorde</th>
                 <th>Naam</th>
+                <th>Aangekomen</th>
                 <th>Acties</th>
             </tr>
         </thead>
         <tbody>
-            {% for post in posts %}
+            {% for item in posts %}
             <tr>
-                <td>{{ post.post_order }}</td>
-                <td>{{ post.name }}</td>
+                <td>{{ item.post.post_order }}</td>
+                <td>{{ item.post.name }}</td>
+                <td>{{ item.arrived_count }}/{{ item.total_groups }}</td>
                 <td>
-                    <a href="/post/{{ post.id }}" class="btn">Bekijken</a>
-                    <a href="/admin/posts/{{ post.id }}/delete" class="btn btn-danger" onclick="return confirm('Deze post verwijderen?')">Verwijderen</a>
+                    <a href="/post/{{ item.post.id }}" class="btn">Bekijken</a>
+                    <a href="/admin/posts/{{ item.post.id }}/delete" class="btn btn-danger" onclick="return confirm('Deze post verwijderen?')">Verwijderen</a>
                 </td>
             </tr>
             {% endfor %}

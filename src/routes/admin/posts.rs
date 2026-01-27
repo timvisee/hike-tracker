@@ -2,10 +2,11 @@ use rocket::form::Form;
 use rocket::response::Redirect;
 use rocket::Route;
 use rocket_dyn_templates::{context, Template};
+use serde::Serialize;
 
 use crate::auth::Admin;
 use crate::db::DbConn;
-use crate::models::{NewPost, Post};
+use crate::models::{Group, NewPost, Post, Scan};
 
 #[derive(FromForm)]
 pub struct NewPostForm {
@@ -13,10 +14,39 @@ pub struct NewPostForm {
     order: i32,
 }
 
+#[derive(Serialize)]
+pub struct PostWithStats {
+    pub post: Post,
+    pub arrived_count: usize,
+    pub total_groups: usize,
+}
+
 #[get("/")]
 pub async fn posts(_admin: Admin, conn: DbConn) -> Template {
     let posts = conn.run(Post::get_all).await.unwrap_or_default();
-    Template::render("admin/posts", context! { posts: posts, is_admin: true })
+    let groups = conn.run(Group::get_all).await.unwrap_or_default();
+    let total_groups = groups.len();
+
+    let mut posts_with_stats = Vec::new();
+    for post in posts {
+        let post_id = post.id.clone();
+        let scans = conn
+            .run(move |c| Scan::get_by_post(c, &post_id))
+            .await
+            .unwrap_or_default();
+        let arrived_count = scans.len();
+
+        posts_with_stats.push(PostWithStats {
+            post,
+            arrived_count,
+            total_groups,
+        });
+    }
+
+    Template::render(
+        "admin/posts",
+        context! { posts: posts_with_stats, is_admin: true },
+    )
 }
 
 #[post("/", data = "<form>")]
