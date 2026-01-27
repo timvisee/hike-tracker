@@ -35,12 +35,7 @@ pub struct NewGroup {
 }
 
 impl NewGroup {
-    pub fn new(
-        name: String,
-        scout_group: String,
-        members: String,
-        phone_number: String,
-    ) -> Self {
+    pub fn new(name: String, scout_group: String, members: String, phone_number: String) -> Self {
         NewGroup {
             id: Uuid::new_v4().to_string(),
             name,
@@ -110,10 +105,7 @@ impl Group {
             .execute(conn)
     }
 
-    pub fn clear_start_time(
-        conn: &mut SqliteConnection,
-        group_id: &str,
-    ) -> QueryResult<usize> {
+    pub fn clear_start_time(conn: &mut SqliteConnection, group_id: &str) -> QueryResult<usize> {
         diesel::update(groups::table.filter(groups::id.eq(group_id)))
             .set(groups::start_time.eq(None::<NaiveDateTime>))
             .execute(conn)
@@ -129,10 +121,7 @@ impl Group {
             .execute(conn)
     }
 
-    pub fn clear_finish_time(
-        conn: &mut SqliteConnection,
-        group_id: &str,
-    ) -> QueryResult<usize> {
+    pub fn clear_finish_time(conn: &mut SqliteConnection, group_id: &str) -> QueryResult<usize> {
         diesel::update(groups::table.filter(groups::id.eq(group_id)))
             .set(groups::finish_time.eq(None::<NaiveDateTime>))
             .execute(conn)
@@ -182,6 +171,13 @@ impl Post {
         posts::table
             .order(posts::post_order.asc())
             .load::<Post>(conn)
+    }
+
+    pub fn get_by_id(conn: &mut SqliteConnection, post_id: &str) -> QueryResult<Option<Post>> {
+        posts::table
+            .filter(posts::id.eq(post_id))
+            .first::<Post>(conn)
+            .optional()
     }
 
     pub fn delete(conn: &mut SqliteConnection, post_id: &str) -> QueryResult<usize> {
@@ -284,5 +280,11 @@ impl Scan {
 
     pub fn delete(conn: &mut SqliteConnection, scan_id: &str) -> QueryResult<usize> {
         diesel::delete(scans::table.filter(scans::id.eq(scan_id))).execute(conn)
+    }
+
+    pub fn get_by_post(conn: &mut SqliteConnection, post_id: &str) -> QueryResult<Vec<Scan>> {
+        scans::table
+            .filter(scans::post_id.eq(post_id))
+            .load::<Scan>(conn)
     }
 }

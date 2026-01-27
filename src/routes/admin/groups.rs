@@ -21,10 +21,7 @@ pub struct NewGroupForm {
 
 #[get("/")]
 pub async fn groups(_admin: Admin, conn: DbConn) -> Template {
-    let groups = conn
-        .run(|c| Group::get_all(c))
-        .await
-        .unwrap_or_default();
+    let groups = conn.run(|c| Group::get_all(c)).await.unwrap_or_default();
     Template::render("admin/groups", context! { groups: groups, is_admin: true })
 }
 
@@ -34,11 +31,12 @@ pub async fn create_group(_admin: Admin, conn: DbConn, form: Form<NewGroupForm>)
     let scout_group = form.scout_group.clone();
     let members = form.members.clone();
     let phone_number = form.phone_number.clone();
-    let result = conn.run(move |c| {
-        let group = NewGroup::new(name, scout_group, members, phone_number);
-        Group::insert(c, group)
-    })
-    .await;
+    let result = conn
+        .run(move |c| {
+            let group = NewGroup::new(name, scout_group, members, phone_number);
+            Group::insert(c, group)
+        })
+        .await;
     if let Err(e) = result {
         eprintln!("Failed to create group: {}", e);
     }

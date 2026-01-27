@@ -1,0 +1,110 @@
+{% extends "base" %}
+
+{% block title %}{{ post.name }} - Post Overview{% endblock %}
+
+{% block content %}
+<h1>{{ post.name }}</h1>
+<p style="color: #666; margin-bottom: 1.5rem;">Post #{{ post.post_order }}</p>
+
+<div class="card">
+    <h2>Currently at Post ({{ groups_at_post | length }})</h2>
+    {% if groups_at_post | length > 0 %}
+    <div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Group</th>
+                <th>Scout Group</th>
+                <th>Arrived</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gs in groups_at_post %}
+            <tr>
+                <td>{{ gs.group.name }}</td>
+                <td>{{ gs.group.scout_group }}</td>
+                <td>{{ gs.arrival_time }}</td>
+                <td><a href="/scan/{{ gs.group.id }}" class="btn">Details</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p style="color: #666;">No groups currently at this post.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>On Their Way ({{ groups_coming | length }})</h2>
+    {% if groups_coming | length > 0 %}
+    <div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Group</th>
+                <th>Scout Group</th>
+                <th>Started</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups_coming %}
+            <tr>
+                <td>{{ group.name }}</td>
+                <td>{{ group.scout_group }}</td>
+                <td>
+                    {% if group.start_time %}
+                    {{ group.start_time | date(format="%H:%M:%S") }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td><a href="/scan/{{ group.id }}" class="btn">Details</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p style="color: #666;">No groups on their way to this post.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Already Left ({{ groups_left | length }})</h2>
+    {% if groups_left | length > 0 %}
+    <div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Group</th>
+                <th>Scout Group</th>
+                <th>Arrived</th>
+                <th>Departed</th>
+                <th>Time at Post</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gs in groups_left %}
+            <tr>
+                <td>{{ gs.group.name }}</td>
+                <td>{{ gs.group.scout_group }}</td>
+                <td>{{ gs.arrival_time }}</td>
+                <td>{{ gs.departure_time }}</td>
+                <td>-</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p style="color: #666;">No groups have left this post yet.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <a href="/dashboard" class="btn">Back to Dashboard</a>
+</div>
+{% endblock %}

@@ -162,7 +162,12 @@ pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) 
 }
 
 #[post("/<group_id>", data = "<form>")]
-pub async fn record_scan(_admin: Admin, conn: DbConn, group_id: String, form: Form<ScanForm>) -> Redirect {
+pub async fn record_scan(
+    _admin: Admin,
+    conn: DbConn,
+    group_id: String,
+    form: Form<ScanForm>,
+) -> Redirect {
     let gid = group_id.clone();
 
     // Verify group exists
@@ -271,7 +276,12 @@ pub async fn create_group_from_scan(
 // ============ EDIT PAGE ============
 
 #[get("/<group_id>/edit")]
-pub async fn edit_page(_admin: Admin, cookies: &CookieJar<'_>, conn: DbConn, group_id: String) -> Result<Template, Redirect> {
+pub async fn edit_page(
+    _admin: Admin,
+    cookies: &CookieJar<'_>,
+    conn: DbConn,
+    group_id: String,
+) -> Result<Template, Redirect> {
     let is_admin = auth::is_admin(cookies);
     let gid = group_id.clone();
     let group = conn
@@ -347,7 +357,12 @@ pub async fn update_scan(
 }
 
 #[get("/<group_id>/edit/scan/<scan_id>/delete")]
-pub async fn delete_scan(_admin: Admin, conn: DbConn, group_id: String, scan_id: String) -> Redirect {
+pub async fn delete_scan(
+    _admin: Admin,
+    conn: DbConn,
+    group_id: String,
+    scan_id: String,
+) -> Redirect {
     conn.run(move |c| Scan::delete(c, &scan_id)).await.ok();
     Redirect::to(format!("/scan/{}/edit", group_id))
 }
@@ -360,11 +375,18 @@ pub struct AddScanForm {
 }
 
 #[post("/<group_id>/edit/scan/add", data = "<form>")]
-pub async fn add_scan(_admin: Admin, conn: DbConn, group_id: String, form: Form<AddScanForm>) -> Redirect {
+pub async fn add_scan(
+    _admin: Admin,
+    conn: DbConn,
+    group_id: String,
+    form: Form<AddScanForm>,
+) -> Redirect {
     if let Ok(arrival) = NaiveDateTime::parse_from_str(&form.arrival_time, "%Y-%m-%dT%H:%M") {
         let gid = group_id.clone();
         let post_id = form.post_id.clone();
-        let departure = form.departure_time.as_ref()
+        let departure = form
+            .departure_time
+            .as_ref()
             .filter(|s| !s.is_empty())
             .and_then(|dt| NaiveDateTime::parse_from_str(dt, "%Y-%m-%dT%H:%M").ok());
 
@@ -384,7 +406,6 @@ pub async fn add_scan(_admin: Admin, conn: DbConn, group_id: String, form: Form<
 
     Redirect::to(format!("/scan/{}/edit", group_id))
 }
-
 
 #[derive(FromForm)]
 pub struct UpdateGroupForm {
@@ -437,7 +458,6 @@ pub async fn update_group(
 
     Redirect::to(format!("/scan/{}/edit", group_id))
 }
-
 
 pub fn routes() -> Vec<Route> {
     routes![

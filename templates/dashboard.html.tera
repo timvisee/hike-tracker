@@ -15,7 +15,7 @@
                 <th>Group</th>
                 <th>Status</th>
                 {% for post in posts %}
-                    <th>{{ post.name }}</th>
+                    <th><a href="/post/{{ post.id }}" style="color: inherit;">{{ post.name }}</a></th>
                 {% endfor %}
                 <th>Total Time</th>
                 <th>Walking Time</th>

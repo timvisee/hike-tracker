@@ -38,6 +38,7 @@
                 <td>{{ post.post_order }}</td>
                 <td>{{ post.name }}</td>
                 <td>
+                    <a href="/post/{{ post.id }}" class="btn">View</a>
                     <a href="/admin/posts/{{ post.id }}/delete" class="btn btn-danger" onclick="return confirm('Delete this post?')">Delete</a>
                 </td>
             </tr>

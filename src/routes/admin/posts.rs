@@ -23,11 +23,12 @@ pub async fn posts(_admin: Admin, conn: DbConn) -> Template {
 pub async fn create_post(_admin: Admin, conn: DbConn, form: Form<NewPostForm>) -> Redirect {
     let name = form.name.clone();
     let order = form.order;
-    let result = conn.run(move |c| {
-        let post = NewPost::new(name, order);
-        Post::insert(c, post)
-    })
-    .await;
+    let result = conn
+        .run(move |c| {
+            let post = NewPost::new(name, order);
+            Post::insert(c, post)
+        })
+        .await;
     if let Err(e) = result {
         eprintln!("Failed to create post: {}", e);
     }

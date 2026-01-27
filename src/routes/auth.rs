@@ -28,7 +28,10 @@ pub fn login(cookies: &CookieJar<'_>, form: Form<LoginForm>) -> Result<Redirect,
         auth::login(cookies);
         Ok(Redirect::to("/admin/groups"))
     } else {
-        Err(Template::render("login", context! { error: "Invalid password", is_admin: false }))
+        Err(Template::render(
+            "login",
+            context! { error: "Invalid password", is_admin: false },
+        ))
     }
 }
 
