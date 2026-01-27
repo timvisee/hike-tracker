@@ -26,16 +26,19 @@
                 <th>Totale Tijd</th>
                 <th>Looptijd</th>
                 <th>Wachttijd</th>
-                {% if is_admin %}
-                    <th>Details</th>
-                {% endif %}
             </tr>
         </thead>
         <tbody>
             {% for gs in group_stats %}
             <tr>
                 <td>{{ gs.group.group_number }}</td>
-                <td>{{ gs.group.scout_group }}: {{gs.group.name }}</td>
+                <td style="white-space: normal;">
+                    {% if is_admin %}
+                    <a href="/scan/{{ gs.group.id }}" style="color: inherit;">{{ gs.group.scout_group }}: {{ gs.group.name }}</a>
+                    {% else %}
+                    {{ gs.group.scout_group }}: {{ gs.group.name }}
+                    {% endif %}
+                </td>
                 <td>{{ gs.group.route }}</td>
                 <td>
                     {% if gs.group.finish_time %}
@@ -75,11 +78,6 @@
                     {% endif %}
                 </td>
                 <td>{{ gs.idle_time.0 | date(format="%H:%M:%S") }}</td>
-                {% if is_admin %}
-                    <td>
-                        <a href="/scan/{{ gs.group.id }}" class="btn">Bekijk</a>
-                    </td>
-                {% endif %}
             </tr>
             {% endfor %}
         </tbody>
