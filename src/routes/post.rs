@@ -2,14 +2,15 @@ use rocket::Route;
 use rocket_dyn_templates::{context, Template};
 use serde::Serialize;
 
-use crate::auth::is_admin;
+use crate::auth::{get_current_auth, is_admin, AuthSession};
 use crate::db::DbConn;
 use crate::models::{Group, Post, Scan};
 
 #[derive(Serialize)]
 struct GroupStatus {
     group: Group,
-    arrival_time: String,
+    scan: Option<Scan>,
+    arrival_time: Option<String>,
     departure_time: Option<String>,
     time_at_post: Option<String>,
 }
@@ -32,24 +33,6 @@ pub async fn post_overview(
         .await
         .unwrap_or_default();
     let all_groups = conn.run(Group::get_all).await.unwrap_or_default();
-    let all_posts = conn.run(Post::get_all).await.unwrap_or_default();
-
-    // Find this post's order to determine which groups should have arrived
-    let post_order = post.post_order;
-
-    // Get previous post (if any) to check if groups have left it
-    let previous_post = all_posts.iter().find(|p| p.post_order < post_order);
-    let previous_post_id = previous_post.map(|p| p.id.clone());
-
-    // Get scans for previous post if it exists
-    let prev_post_scans = if let Some(ref prev_id) = previous_post_id {
-        let prev_id = prev_id.clone();
-        conn.run(move |c| Scan::get_by_post(c, &prev_id))
-            .await
-            .unwrap_or_default()
-    } else {
-        vec![]
-    };
 
     let mut groups_at_post = Vec::new();
     let mut groups_left = Vec::new();
@@ -62,11 +45,11 @@ pub async fn post_overview(
         }
 
         // Check if this group has a scan at this post
-        let scan = scans.iter().find(|s| s.group_id == group.id);
+        let scan = scans.iter().find(|s| s.group_id == group.id).cloned();
 
-        match scan {
+        match &scan {
             Some(s) => {
-                let arrival_time = s.arrival_time.format("%H:%M:%S").to_string();
+                let arrival_time = Some(s.arrival_time.format("%H:%M:%S").to_string());
                 let departure_time = s.departure_time.map(|dt| dt.format("%H:%M:%S").to_string());
                 let time_at_post = s.departure_time.map(|dt| {
                     let duration = dt - s.arrival_time;
@@ -79,6 +62,7 @@ pub async fn post_overview(
 
                 let status = GroupStatus {
                     group: group.clone(),
+                    scan: scan.clone(),
                     arrival_time,
                     departure_time: departure_time.clone(),
                     time_at_post,
@@ -91,26 +75,28 @@ pub async fn post_overview(
                 }
             }
             None => {
-                // Group hasn't arrived at this post yet
-                // Only show as "coming" if:
-                // - This is the first post (no previous post), OR
-                // - The group has left the previous post
-                let should_show = if previous_post_id.is_none() {
-                    // First post - all started groups that haven't arrived are coming
-                    true
-                } else {
-                    // Check if group has left the previous post
-                    prev_post_scans
-                        .iter()
-                        .any(|s| s.group_id == group.id && s.departure_time.is_some())
-                };
-
-                if should_show {
-                    groups_coming.push(group);
-                }
+                // Group hasn't arrived at this post yet - show as coming
+                groups_coming.push(GroupStatus {
+                    group,
+                    scan: None,
+                    arrival_time: None,
+                    departure_time: None,
+                    time_at_post: None,
+                });
             }
         }
     }
+
+    // Check if current user is the post holder for this post
+    let current_auth = get_current_auth(cookies);
+    let is_post_holder = matches!(
+        &current_auth,
+        Some(AuthSession::PostHolder { post_id: ref pid }) if pid == &post_id
+    );
+    let holder_post_id = match &current_auth {
+        Some(AuthSession::PostHolder { post_id: pid }) => Some(pid.clone()),
+        _ => None,
+    };
 
     Some(Template::render(
         "post_overview",
@@ -120,6 +106,9 @@ pub async fn post_overview(
             groups_left: groups_left,
             groups_coming: groups_coming,
             is_admin: is_admin(cookies),
+            is_post_holder: is_post_holder,
+            holder_post_id: holder_post_id,
+            can_scan: is_admin(cookies) || is_post_holder,
         },
     ))
 }

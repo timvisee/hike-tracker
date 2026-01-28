@@ -24,7 +24,7 @@
                 <td>{{ gs.group.name }}</td>
                 <td>{{ gs.group.scout_group }}</td>
                 <td>{{ gs.arrival_time }}</td>
-                <td><a href="/scan/{{ gs.group.id }}" class="btn">Details</a></td>
+                <td><a href="/scan/{{ gs.group.id }}" class="btn">{% if can_scan %}Scannen{% else %}Details{% endif %}</a></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -49,18 +49,18 @@
             </tr>
         </thead>
         <tbody>
-            {% for group in groups_coming %}
+            {% for gs in groups_coming %}
             <tr>
-                <td>{{ group.name }}</td>
-                <td>{{ group.scout_group }}</td>
+                <td>{{ gs.group.name }}</td>
+                <td>{{ gs.group.scout_group }}</td>
                 <td>
-                    {% if group.start_time %}
-                    {{ group.start_time | date(format="%H:%M:%S") }}
+                    {% if gs.group.start_time %}
+                    {{ gs.group.start_time | date(format="%H:%M:%S") }}
                     {% else %}
                     -
                     {% endif %}
                 </td>
-                <td><a href="/scan/{{ group.id }}" class="btn">Details</a></td>
+                <td><a href="/scan/{{ gs.group.id }}" class="btn">{% if can_scan %}Scannen{% else %}Details{% endif %}</a></td>
             </tr>
             {% endfor %}
         </tbody>

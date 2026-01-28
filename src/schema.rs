@@ -21,6 +21,7 @@ diesel::table! {
         name -> Text,
         post_order -> Integer,
         created_at -> Timestamp,
+        password_hash -> Nullable<Text>,
     }
 }
 

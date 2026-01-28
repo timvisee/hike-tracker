@@ -16,6 +16,9 @@ pub struct RankedGroup {
     pub idle_time: String,
     pub total_time_secs: Option<i64>,
     pub walking_time_secs: Option<i64>,
+    pub posts_visited: usize,
+    pub total_posts: usize,
+    pub visited_all_posts: bool,
 }
 
 fn format_duration(delta: TimeDelta) -> String {
@@ -32,6 +35,7 @@ pub async fn ranking(_admin: Admin, conn: DbConn, sort: Option<String>) -> Templ
 
     let groups = conn.run(Group::get_all).await.unwrap_or_default();
     let posts = conn.run(Post::get_all).await.unwrap_or_default();
+    let total_posts = posts.len();
 
     let mut ranked_groups: Vec<RankedGroup> = Vec::new();
 
@@ -46,6 +50,9 @@ pub async fn ranking(_admin: Admin, conn: DbConn, sort: Option<String>) -> Templ
             .run(move |c| Scan::get_by_group(c, &group_id))
             .await
             .unwrap_or_default();
+
+        let posts_visited = scans.len();
+        let visited_all_posts = posts_visited >= total_posts;
 
         // Calculate idle time (time spent at posts)
         let idle_time: TimeDelta = posts
@@ -74,24 +81,35 @@ pub async fn ranking(_admin: Admin, conn: DbConn, sort: Option<String>) -> Templ
             idle_time: format_duration(idle_time),
             total_time_secs: total_time.map(|t| t.num_seconds()),
             walking_time_secs: walking_time.map(|t| t.num_seconds()),
+            posts_visited,
+            total_posts,
+            visited_all_posts,
         });
     }
 
-    // Sort by selected criteria
+    // Sort: complete groups first (by time), then incomplete groups (by time)
     match sort_by.as_str() {
         "walking" => {
             ranked_groups.sort_by(|a, b| {
-                a.walking_time_secs
-                    .unwrap_or(i64::MAX)
-                    .cmp(&b.walking_time_secs.unwrap_or(i64::MAX))
+                // First sort by visited_all_posts (complete groups first)
+                b.visited_all_posts.cmp(&a.visited_all_posts).then_with(|| {
+                    // Then by walking time
+                    a.walking_time_secs
+                        .unwrap_or(i64::MAX)
+                        .cmp(&b.walking_time_secs.unwrap_or(i64::MAX))
+                })
             });
         }
         _ => {
             // Default: sort by total time
             ranked_groups.sort_by(|a, b| {
-                a.total_time_secs
-                    .unwrap_or(i64::MAX)
-                    .cmp(&b.total_time_secs.unwrap_or(i64::MAX))
+                // First sort by visited_all_posts (complete groups first)
+                b.visited_all_posts.cmp(&a.visited_all_posts).then_with(|| {
+                    // Then by total time
+                    a.total_time_secs
+                        .unwrap_or(i64::MAX)
+                        .cmp(&b.total_time_secs.unwrap_or(i64::MAX))
+                })
             });
         }
     }

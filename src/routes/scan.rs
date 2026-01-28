@@ -6,7 +6,7 @@ use rocket::Route;
 use rocket_dyn_templates::{context, Template};
 use serde::Serialize;
 
-use crate::auth::{self, Admin};
+use crate::auth::{self, Admin, AnyAuth, AuthSession};
 use crate::db::DbConn;
 use crate::models::{Group, NewGroup, NewScan, Post, Scan};
 
@@ -130,6 +130,13 @@ fn get_next_action(group: &Group, posts: &[Post], scans: &[Scan]) -> Option<Next
 #[get("/<group_id>")]
 pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) -> Template {
     let is_admin = auth::is_admin(cookies);
+    let current_auth = auth::get_current_auth(cookies);
+    let holder_post_id = match &current_auth {
+        Some(AuthSession::PostHolder { post_id }) => Some(post_id.clone()),
+        _ => None,
+    };
+    let is_post_holder = holder_post_id.is_some();
+
     let gid = group_id.clone();
     let group = conn
         .run(move |c| Group::get_by_id(c, &gid))
@@ -143,7 +150,7 @@ pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) 
             let scout_groups = get_scout_groups();
             return Template::render(
                 "scan_new_group",
-                context! { group_id: group_id, is_admin: is_admin, scout_groups: scout_groups },
+                context! { group_id: group_id, is_admin: is_admin, is_post_holder: is_post_holder, holder_post_id: holder_post_id, scout_groups: scout_groups },
             );
         }
     };
@@ -166,6 +173,8 @@ pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) 
             posts: posts,
             scans: scans,
             is_admin: is_admin,
+            is_post_holder: is_post_holder,
+            holder_post_id: holder_post_id,
             next_action: next_action,
             stats: stats,
             emergency_info: emergency_info,
@@ -175,7 +184,7 @@ pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String) 
 
 #[post("/<group_id>", data = "<form>")]
 pub async fn record_scan(
-    _admin: Admin,
+    auth: AnyAuth,
     conn: DbConn,
     group_id: String,
     form: Form<ScanForm>,
@@ -196,8 +205,11 @@ pub async fn record_scan(
 
     let action = form.action.clone();
 
-    // Handle start timer
+    // Handle start timer (admin only)
     if action == "__START_TIMER__" {
+        if !auth.is_admin {
+            return Redirect::to(format!("/scan/{}", group_id));
+        }
         let gid = group_id.clone();
         let now = Utc::now().naive_utc();
         conn.run(move |c| Group::set_start_time(c, &gid, now))
@@ -206,8 +218,11 @@ pub async fn record_scan(
         return Redirect::to(format!("/scan/{}", group_id));
     }
 
-    // Handle stop timer
+    // Handle stop timer (admin only)
     if action == "__STOP_TIMER__" {
+        if !auth.is_admin {
+            return Redirect::to(format!("/scan/{}", group_id));
+        }
         let gid = group_id.clone();
         let now = Utc::now().naive_utc();
         conn.run(move |c| Group::set_finish_time(c, &gid, now))
@@ -218,6 +233,12 @@ pub async fn record_scan(
 
     // Handle arrive at post
     if let Some(post_id) = action.strip_prefix("ARRIVE_") {
+        // Post holders can only scan for their assigned post
+        if let Some(ref holder_post_id) = auth.post_id {
+            if holder_post_id != post_id {
+                return Redirect::to(format!("/scan/{}", group_id));
+            }
+        }
         let gid = group_id.clone();
         let post_id = post_id.to_string();
         conn.run(move |c| {
@@ -231,6 +252,12 @@ pub async fn record_scan(
 
     // Handle leave post
     if let Some(post_id) = action.strip_prefix("LEAVE_") {
+        // Post holders can only scan for their assigned post
+        if let Some(ref holder_post_id) = auth.post_id {
+            if holder_post_id != post_id {
+                return Redirect::to(format!("/scan/{}", group_id));
+            }
+        }
         let gid = group_id.clone();
         let post_id = post_id.to_string();
         let existing_scan = conn
@@ -279,8 +306,15 @@ pub async fn create_group_from_scan(
     let gid = group_id.clone();
     let result = conn
         .run(move |c| {
-            let group =
-                NewGroup::new_with_id(gid, name, scout_group, members, phone_number, group_number, route);
+            let group = NewGroup::new_with_id(
+                gid,
+                name,
+                scout_group,
+                members,
+                phone_number,
+                group_number,
+                route,
+            );
             Group::insert(c, group)
         })
         .await;
@@ -294,7 +328,7 @@ pub async fn create_group_from_scan(
 
 #[get("/<group_id>/edit")]
 pub async fn edit_page(
-    _admin: Admin,
+    auth: AnyAuth,
     cookies: &CookieJar<'_>,
     conn: DbConn,
     group_id: String,
@@ -321,14 +355,25 @@ pub async fn edit_page(
 
     let scout_groups = get_scout_groups();
 
+    // For post holders, filter to only show their post
+    let filtered_posts = if let Some(ref holder_post_id) = auth.post_id {
+        posts
+            .into_iter()
+            .filter(|p| &p.id == holder_post_id)
+            .collect()
+    } else {
+        posts
+    };
+
     Ok(Template::render(
         "scan_edit",
         context! {
             group: group,
-            posts: posts,
+            posts: filtered_posts,
             scans: scans,
             is_admin: is_admin,
             scout_groups: scout_groups,
+            holder_post_id: auth.post_id,
         },
     ))
 }
@@ -342,12 +387,35 @@ pub struct UpdateScanForm {
 
 #[post("/<group_id>/edit/scan/<scan_id>/update", data = "<form>")]
 pub async fn update_scan(
-    _admin: Admin,
+    auth: AnyAuth,
     conn: DbConn,
     group_id: String,
     scan_id: String,
     form: Form<UpdateScanForm>,
 ) -> Redirect {
+    // For post holders, verify they can only edit scans for their post
+    if let Some(ref holder_post_id) = auth.post_id {
+        let sid = scan_id.clone();
+        let scan = conn
+            .run(move |c| {
+                use crate::schema::scans;
+                use diesel::prelude::*;
+                scans::table
+                    .filter(scans::id.eq(&sid))
+                    .first::<Scan>(c)
+                    .optional()
+            })
+            .await
+            .ok()
+            .flatten();
+
+        if let Some(scan) = scan {
+            if &scan.post_id != holder_post_id {
+                return Redirect::to(format!("/scan/{}/edit", group_id));
+            }
+        }
+    }
+
     // Parse arrival time
     if let Ok(arrival) = NaiveDateTime::parse_from_str(&form.arrival_time, "%Y-%m-%dT%H:%M") {
         let sid = scan_id.clone();
@@ -378,11 +446,34 @@ pub async fn update_scan(
 
 #[get("/<group_id>/edit/scan/<scan_id>/delete")]
 pub async fn delete_scan(
-    _admin: Admin,
+    auth: AnyAuth,
     conn: DbConn,
     group_id: String,
     scan_id: String,
 ) -> Redirect {
+    // For post holders, verify they can only delete scans for their post
+    if let Some(ref holder_post_id) = auth.post_id {
+        let sid = scan_id.clone();
+        let scan = conn
+            .run(move |c| {
+                use crate::schema::scans;
+                use diesel::prelude::*;
+                scans::table
+                    .filter(scans::id.eq(&sid))
+                    .first::<Scan>(c)
+                    .optional()
+            })
+            .await
+            .ok()
+            .flatten();
+
+        if let Some(scan) = scan {
+            if &scan.post_id != holder_post_id {
+                return Redirect::to(format!("/scan/{}/edit", group_id));
+            }
+        }
+    }
+
     conn.run(move |c| Scan::delete(c, &scan_id)).await.ok();
     Redirect::to(format!("/scan/{}/edit", group_id))
 }
@@ -396,11 +487,18 @@ pub struct AddScanForm {
 
 #[post("/<group_id>/edit/scan/add", data = "<form>")]
 pub async fn add_scan(
-    _admin: Admin,
+    auth: AnyAuth,
     conn: DbConn,
     group_id: String,
     form: Form<AddScanForm>,
 ) -> Redirect {
+    // Post holders can only add scans for their assigned post
+    if let Some(ref holder_post_id) = auth.post_id {
+        if &form.post_id != holder_post_id {
+            return Redirect::to(format!("/scan/{}/edit", group_id));
+        }
+    }
+
     if let Ok(arrival) = NaiveDateTime::parse_from_str(&form.arrival_time, "%Y-%m-%dT%H:%M") {
         let gid = group_id.clone();
         let post_id = form.post_id.clone();
@@ -437,7 +535,7 @@ pub struct UpdateGroupForm {
 
 #[post("/<group_id>/edit/group/update", data = "<form>")]
 pub async fn update_group(
-    _admin: Admin,
+    _admin: Admin, // Group timer edits are admin-only
     conn: DbConn,
     group_id: String,
     form: Form<UpdateGroupForm>,
@@ -491,7 +589,7 @@ pub struct UpdateGroupDetailsForm {
 
 #[post("/<group_id>/edit/group/details", data = "<form>")]
 pub async fn update_group_details(
-    _admin: Admin,
+    _admin: Admin, // Group details edits are admin-only
     conn: DbConn,
     group_id: String,
     form: Form<UpdateGroupDetailsForm>,

@@ -4,7 +4,7 @@ use rocket::Route;
 use rocket_dyn_templates::{context, Template};
 use serde::Serialize;
 
-use crate::auth;
+use crate::auth::{self, AuthSession};
 use crate::db::DbConn;
 use crate::models::{Group, Post, Scan};
 
@@ -27,6 +27,13 @@ pub struct GroupDetail {
 #[get("/")]
 pub async fn dashboard(cookies: &CookieJar<'_>, conn: DbConn) -> Template {
     let is_admin = auth::is_admin(cookies);
+    let current_auth = auth::get_current_auth(cookies);
+    let holder_post_id = match &current_auth {
+        Some(AuthSession::PostHolder { post_id }) => Some(post_id.clone()),
+        _ => None,
+    };
+    let is_post_holder = holder_post_id.is_some();
+
     let groups = conn.run(Group::get_all).await.unwrap_or_default();
     let posts = conn.run(Post::get_all).await.unwrap_or_default();
 
@@ -43,7 +50,13 @@ pub async fn dashboard(cookies: &CookieJar<'_>, conn: DbConn) -> Template {
 
     Template::render(
         "dashboard",
-        context! { group_stats: group_stats, posts: posts, is_admin: is_admin },
+        context! {
+            group_stats: group_stats,
+            posts: posts,
+            is_admin: is_admin,
+            is_post_holder: is_post_holder,
+            holder_post_id: holder_post_id,
+        },
     )
 }
 

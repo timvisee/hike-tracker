@@ -177,6 +177,7 @@ pub struct Post {
     pub name: String,
     pub post_order: i32,
     pub created_at: NaiveDateTime,
+    pub password_hash: Option<String>,
 }
 
 #[derive(Debug, Insertable)]
@@ -186,6 +187,7 @@ pub struct NewPost {
     pub name: String,
     pub post_order: i32,
     pub created_at: NaiveDateTime,
+    pub password_hash: Option<String>,
 }
 
 impl NewPost {
@@ -195,6 +197,7 @@ impl NewPost {
             name,
             post_order: order,
             created_at: chrono::Utc::now().naive_utc(),
+            password_hash: None,
         }
     }
 }
@@ -224,6 +227,41 @@ impl Post {
         diesel::delete(scans::table.filter(scans::post_id.eq(post_id))).execute(conn)?;
         // Delete the post
         diesel::delete(posts::table.filter(posts::id.eq(post_id))).execute(conn)
+    }
+
+    pub fn set_password(
+        conn: &mut SqliteConnection,
+        post_id: &str,
+        password: &str,
+    ) -> QueryResult<usize> {
+        let hash = bcrypt::hash(password, bcrypt::DEFAULT_COST).expect("Failed to hash password");
+        diesel::update(posts::table.filter(posts::id.eq(post_id)))
+            .set(posts::password_hash.eq(Some(hash)))
+            .execute(conn)
+    }
+
+    pub fn clear_password(conn: &mut SqliteConnection, post_id: &str) -> QueryResult<usize> {
+        diesel::update(posts::table.filter(posts::id.eq(post_id)))
+            .set(posts::password_hash.eq(None::<String>))
+            .execute(conn)
+    }
+
+    pub fn verify_password(&self, password: &str) -> bool {
+        match &self.password_hash {
+            Some(hash) => bcrypt::verify(password, hash).unwrap_or(false),
+            None => false,
+        }
+    }
+
+    pub fn find_by_password(
+        conn: &mut SqliteConnection,
+        password: &str,
+    ) -> QueryResult<Option<Post>> {
+        let posts = posts::table
+            .filter(posts::password_hash.is_not_null())
+            .load::<Post>(conn)?;
+
+        Ok(posts.into_iter().find(|p| p.verify_password(password)))
     }
 }
 

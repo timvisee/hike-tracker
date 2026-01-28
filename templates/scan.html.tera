@@ -23,7 +23,7 @@
     {% endif %}
 </div>
 
-{% if not is_admin and emergency_info %}
+{% if not is_admin or is_post_holder and emergency_info %}
 <div class="card" style="background: #fff3cd; border: 1px solid #ffc107;">
     <p style="margin: 0;"><strong>Noodinfo:</strong> {{ emergency_info }}</p>
 </div>
@@ -75,7 +75,7 @@
         </thead>
         <tbody>
             {% for ps in stats.post_scans %}
-            {% if is_admin or ps.scan %}
+            {% if is_admin or ps.scan or (is_post_holder and ps.post.id == holder_post_id) %}
             <tr>
                 <td>{{ ps.post.post_order }}</td>
                 <td>{{ ps.post.name }}</td>
@@ -99,7 +99,7 @@
         </tbody>
     </table>
     </div>
-    {% if is_admin %}
+    {% if is_admin or is_post_holder %}
     <p style="margin-top: 1rem;"><a href="/scan/{{ group.id }}/edit" class="btn">Scans Bewerken</a></p>
     {% endif %}
 </div>
@@ -116,7 +116,43 @@
     </form>
     <p class="hint">Houd de knop 1 seconden ingedrukt om te bevestigen</p>
 </div>
+{% elif is_post_holder and holder_post_id and group.start_time and not group.finish_time %}
+{% for ps in stats.post_scans %}
+{% if ps.post.id == holder_post_id %}
+<div class="card">
+    <h2>Actie voor {{ ps.post.name }}</h2>
+    {% if not ps.scan %}
+    <form id="scan-form" action="/scan/{{ group.id }}" method="post">
+        <input type="hidden" name="action" value="ARRIVE_{{ ps.post.id }}">
+        <button type="button" id="long-press-btn" class="btn-success long-press-btn">
+            <span class="btn-progress"></span>
+            <span class="btn-text">Aankomst Registreren</span>
+        </button>
+    </form>
+    <p class="hint">Houd de knop 1 seconden ingedrukt om te bevestigen</p>
+    {% elif not ps.scan.departure_time %}
+    <form id="scan-form" action="/scan/{{ group.id }}" method="post">
+        <input type="hidden" name="action" value="LEAVE_{{ ps.post.id }}">
+        <button type="button" id="long-press-btn" class="btn-success long-press-btn">
+            <span class="btn-progress"></span>
+            <span class="btn-text">Vertrek Registreren</span>
+        </button>
+    </form>
+    <p class="hint">Houd de knop 1 seconden ingedrukt om te bevestigen</p>
+    {% else %}
+    <p class="status-badge status-finished" style="display: inline-block;">Groep is al vertrokken van deze post</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endfor %}
+{% elif is_admin and group.finish_time %}
+<div class="card">
+    <h2>Tocht Voltooid</h2>
+    <p>Deze groep heeft de tocht afgerond.</p>
+</div>
+{% endif %}
 
+{% if (is_admin and next_action) or (is_post_holder and holder_post_id and group.start_time and not group.finish_time) %}
 <style>
     .long-press-btn {
         position: relative;
@@ -153,6 +189,7 @@
 (function() {
     var btn = document.getElementById('long-press-btn');
     var form = document.getElementById('scan-form');
+    if (!btn || !form) return;
     var pressTimer = null;
 
     function startPress(e) {
@@ -187,11 +224,6 @@
     btn.addEventListener('touchcancel', cancelPress);
 })();
 </script>
-{% elif is_admin and group.finish_time %}
-<div class="card">
-    <h2>Tocht Voltooid</h2>
-    <p>Deze groep heeft de tocht afgerond.</p>
-</div>
 {% endif %}
 
 {% endblock %}

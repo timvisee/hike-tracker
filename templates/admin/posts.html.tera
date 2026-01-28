@@ -30,6 +30,7 @@
                 <th>Volgorde</th>
                 <th>Naam</th>
                 <th>Aangekomen</th>
+                <th>Wachtwoord</th>
                 <th>Acties</th>
             </tr>
         </thead>
@@ -40,8 +41,26 @@
                 <td>{{ item.post.name }}</td>
                 <td>{{ item.arrived_count }}/{{ item.total_groups }}</td>
                 <td>
+                    {% if item.has_password %}
+                    <span class="status-badge status-active">Ingesteld</span>
+                    {% else %}
+                    <span style="color: #999;">Geen</span>
+                    {% endif %}
+                </td>
+                <td>
                     <a href="/post/{{ item.post.id }}" class="btn">Bekijken</a>
                     <a href="/admin/posts/{{ item.post.id }}/delete" class="btn btn-danger" onclick="return confirm('Deze post verwijderen?')">Verwijderen</a>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="5" style="background: #f8f9fa; padding: 0.5rem;">
+                    <form action="/admin/posts/{{ item.post.id }}/password" method="post" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
+                        <input type="password" name="password" placeholder="{% if item.has_password %}Nieuw wachtwoord{% else %}Wachtwoord instellen{% endif %}" style="width: auto; flex: 1;">
+                        <button type="submit" class="btn" style="margin: 0;">{% if item.has_password %}Wijzigen{% else %}Instellen{% endif %}</button>
+                        {% if item.has_password %}
+                        <a href="/admin/posts/{{ item.post.id }}/password/clear" class="btn btn-danger" style="margin: 0;" onclick="return confirm('Wachtwoord verwijderen?')">Verwijderen</a>
+                        {% endif %}
+                    </form>
                 </td>
             </tr>
             {% endfor %}

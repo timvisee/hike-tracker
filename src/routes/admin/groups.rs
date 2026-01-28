@@ -7,8 +7,7 @@ use rocket_dyn_templates::{context, Template};
 
 use crate::auth::Admin;
 use crate::db::DbConn;
-use crate::models::{Group};
-
+use crate::models::Group;
 
 #[get("/")]
 pub async fn groups(_admin: Admin, conn: DbConn) -> Template {
@@ -44,9 +43,5 @@ pub fn group_qr(_admin: Admin, id: &str) -> (ContentType, Vec<u8>) {
 }
 
 pub fn routes() -> Vec<Route> {
-    routes![
-        groups,
-        delete_group,
-        group_qr
-    ]
+    routes![groups, delete_group, group_qr]
 }

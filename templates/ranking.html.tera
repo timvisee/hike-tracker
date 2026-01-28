@@ -31,6 +31,7 @@
                 <th>Groep</th>
                 <th>Speltak</th>
                 <th>Route</th>
+                <th>Posten</th>
                 <th>Totale Tijd</th>
                 <th>Looptijd</th>
                 <th>Wachttijd</th>
@@ -39,22 +40,33 @@
         </thead>
         <tbody>
             {% for rg in ranked_groups %}
-            <tr>
+            <tr{% if not rg.visited_all_posts %} style="opacity: 0.7;"{% endif %}>
                 <td>
-                    {% if rg.rank == 1 %}
-                    <span style="font-size: 1.5rem;">🥇</span>
-                    {% elif rg.rank == 2 %}
-                    <span style="font-size: 1.5rem;">🥈</span>
-                    {% elif rg.rank == 3 %}
-                    <span style="font-size: 1.5rem;">🥉</span>
+                    {% if rg.visited_all_posts %}
+                        {% if rg.rank == 1 %}
+                        <span style="font-size: 1.5rem;">&#x1F947;</span>
+                        {% elif rg.rank == 2 %}
+                        <span style="font-size: 1.5rem;">&#x1F948;</span>
+                        {% elif rg.rank == 3 %}
+                        <span style="font-size: 1.5rem;">&#x1F949;</span>
+                        {% else %}
+                        {{ rg.rank }}
+                        {% endif %}
                     {% else %}
-                    {{ rg.rank }}
+                    <span style="color: #999;">-</span>
                     {% endif %}
                 </td>
                 <td>{{ rg.group.group_number }}</td>
                 <td>{{ rg.group.name }}</td>
                 <td>{{ rg.group.scout_group }}</td>
                 <td>{{ rg.group.route }}</td>
+                <td>
+                    {% if rg.visited_all_posts %}
+                    <span class="status-badge status-finished">{{ rg.posts_visited }}/{{ rg.total_posts }}</span>
+                    {% else %}
+                    <span class="status-badge status-warning">{{ rg.posts_visited }}/{{ rg.total_posts }}</span>
+                    {% endif %}
+                </td>
                 <td>{% if rg.total_time %}{{ rg.total_time }}{% else %}-{% endif %}</td>
                 <td>{% if rg.walking_time %}{{ rg.walking_time }}{% else %}-{% endif %}</td>
                 <td>{{ rg.idle_time }}</td>

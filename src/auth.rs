@@ -1,8 +1,15 @@
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::time::Duration;
+use serde::{Deserialize, Serialize};
 
-const ADMIN_COOKIE: &str = "admin_session";
+const AUTH_COOKIE: &str = "auth_session";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AuthSession {
+    Admin,
+    PostHolder { post_id: String },
+}
 
 pub struct Admin;
 
@@ -11,31 +18,72 @@ impl<'r> FromRequest<'r> for Admin {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        match request.cookies().get_private(ADMIN_COOKIE) {
-            Some(cookie) if cookie.value() == "authenticated" => Outcome::Success(Admin),
+        match get_auth_session(request.cookies()) {
+            Some(AuthSession::Admin) => Outcome::Success(Admin),
             _ => Outcome::Forward(Status::Unauthorized),
         }
     }
 }
 
-pub fn login(cookies: &CookieJar<'_>) {
-    let mut cookie = Cookie::new(ADMIN_COOKIE, "authenticated");
+pub struct AnyAuth {
+    pub is_admin: bool,
+    pub post_id: Option<String>,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AnyAuth {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        match get_auth_session(request.cookies()) {
+            Some(AuthSession::Admin) => Outcome::Success(AnyAuth {
+                is_admin: true,
+                post_id: None,
+            }),
+            Some(AuthSession::PostHolder { post_id }) => Outcome::Success(AnyAuth {
+                is_admin: false,
+                post_id: Some(post_id),
+            }),
+            None => Outcome::Forward(Status::Unauthorized),
+        }
+    }
+}
+
+fn get_auth_session(cookies: &CookieJar<'_>) -> Option<AuthSession> {
+    cookies
+        .get_private(AUTH_COOKIE)
+        .and_then(|cookie| serde_json::from_str(cookie.value()).ok())
+}
+
+pub fn login_admin(cookies: &CookieJar<'_>) {
+    let session = AuthSession::Admin;
+    let value = serde_json::to_string(&session).expect("Failed to serialize session");
+    let mut cookie = Cookie::new(AUTH_COOKIE, value);
+    cookie.set_max_age(Duration::hours(24));
+    cookies.add_private(cookie);
+}
+
+pub fn login_post_holder(cookies: &CookieJar<'_>, post_id: String) {
+    let session = AuthSession::PostHolder { post_id };
+    let value = serde_json::to_string(&session).expect("Failed to serialize session");
+    let mut cookie = Cookie::new(AUTH_COOKIE, value);
     cookie.set_max_age(Duration::hours(24));
     cookies.add_private(cookie);
 }
 
 pub fn logout(cookies: &CookieJar<'_>) {
-    cookies.remove_private(ADMIN_COOKIE);
+    cookies.remove_private(AUTH_COOKIE);
 }
 
-pub fn check_password(password: &str) -> bool {
+pub fn check_admin_password(password: &str) -> bool {
     let admin_password = std::env::var("ADMIN_PASSWORD").unwrap_or_default();
     !admin_password.is_empty() && password == admin_password
 }
 
 pub fn is_admin(cookies: &CookieJar<'_>) -> bool {
-    cookies
-        .get_private(ADMIN_COOKIE)
-        .map(|c| c.value() == "authenticated")
-        .unwrap_or(false)
+    matches!(get_auth_session(cookies), Some(AuthSession::Admin))
+}
+
+pub fn get_current_auth(cookies: &CookieJar<'_>) -> Option<AuthSession> {
+    get_auth_session(cookies)
 }

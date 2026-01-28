@@ -218,6 +218,9 @@
         <a href="/admin/groups">Groepen</a>
         <a href="/admin/posts">Posten</a>
         <a href="/logout" style="margin-left: auto;">Uitloggen</a>
+        {% elif is_post_holder and holder_post_id %}
+        <a href="/post/{{ holder_post_id }}">Mijn Post</a>
+        <a href="/logout" style="margin-left: auto;">Uitloggen</a>
         {% else %}
         <a href="/login" style="margin-left: auto;">Inloggen</a>
         {% endif %}

@@ -19,6 +19,7 @@ pub struct PostWithStats {
     pub post: Post,
     pub arrived_count: usize,
     pub total_groups: usize,
+    pub has_password: bool,
 }
 
 #[get("/")]
@@ -35,11 +36,13 @@ pub async fn posts(_admin: Admin, conn: DbConn) -> Template {
             .await
             .unwrap_or_default();
         let arrived_count = scans.len();
+        let has_password = post.password_hash.is_some();
 
         posts_with_stats.push(PostWithStats {
             post,
             arrived_count,
             total_groups,
+            has_password,
         });
     }
 
@@ -72,6 +75,42 @@ pub async fn delete_post(_admin: Admin, conn: DbConn, id: String) -> Redirect {
     Redirect::to("/admin/posts")
 }
 
+#[derive(FromForm)]
+pub struct SetPasswordForm {
+    password: String,
+}
+
+#[post("/<id>/password", data = "<form>")]
+pub async fn set_password(
+    _admin: Admin,
+    conn: DbConn,
+    id: String,
+    form: Form<SetPasswordForm>,
+) -> Redirect {
+    let password = form.password.clone();
+    if password.is_empty() {
+        // Clear password if empty
+        conn.run(move |c| Post::clear_password(c, &id)).await.ok();
+    } else {
+        conn.run(move |c| Post::set_password(c, &id, &password))
+            .await
+            .ok();
+    }
+    Redirect::to("/admin/posts")
+}
+
+#[get("/<id>/password/clear")]
+pub async fn clear_password(_admin: Admin, conn: DbConn, id: String) -> Redirect {
+    conn.run(move |c| Post::clear_password(c, &id)).await.ok();
+    Redirect::to("/admin/posts")
+}
+
 pub fn routes() -> Vec<Route> {
-    routes![posts, create_post, delete_post]
+    routes![
+        posts,
+        create_post,
+        delete_post,
+        set_password,
+        clear_password
+    ]
 }
