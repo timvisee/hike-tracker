@@ -21,7 +21,7 @@
             <select id="scout_group" name="scout_group" required>
                 <option value="">-- Selecteer een speltak --</option>
                 {% for sg in scout_groups %}
-                <option value="{{ sg }}" {% if group.scout_group == sg %}selected{% endif %}>{{ sg }}</option>
+                <option value="{{ sg }}" {% if group.scout_group is defined and group.scout_group == sg %}selected{% endif %}>{{ sg }}</option>
                 {% endfor %}
             </select>
         </div>
