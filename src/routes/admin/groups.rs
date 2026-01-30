@@ -23,7 +23,8 @@ pub async fn delete_group(_admin: Admin, conn: DbConn, id: String) -> Redirect {
 
 #[get("/<id>/qr")]
 pub fn group_qr(_admin: Admin, id: &str) -> (ContentType, Vec<u8>) {
-    let url = format!("/scan/{}", id);
+    // TODO: Hardcoded url
+    let url = format!("https://hike.qvdijk.nl/scan/{}", id);
 
     let code = QrCode::new(url.as_bytes()).unwrap();
     let image = code.render::<Luma<u8>>().min_dimensions(200, 200).build();
