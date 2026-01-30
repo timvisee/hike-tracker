@@ -105,7 +105,6 @@ pub async fn post_overview(
             is_admin: is_admin(cookies),
             is_post_holder: is_post_holder,
             holder_post_id: holder_post_id,
-            can_scan: is_admin(cookies) || is_post_holder,
         },
     ))
 }

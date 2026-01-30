@@ -24,7 +24,7 @@
                 <td>{{ gs.group.name }}</td>
                 <td>{{ gs.group.scout_group }}</td>
                 <td>{{ gs.arrival_time }}</td>
-                <td><a href="/scan/{{ gs.group.id }}" class="btn">{% if can_scan %}Scannen{% else %}Details{% endif %}</a></td>
+                <td><a href="/scan/{{ gs.group.id }}" class="btn">Scan</a></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -60,7 +60,7 @@
                     -
                     {% endif %}
                 </td>
-                <td><a href="/scan/{{ gs.group.id }}" class="btn">{% if can_scan %}Scannen{% else %}Details{% endif %}</a></td>
+                <td><a href="/scan/{{ gs.group.id }}" class="btn">Scan</a></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -83,6 +83,8 @@
                 <th>Aangekomen</th>
                 <th>Vertrokken</th>
                 <th>Tijd op Post</th>
+                <th></th>
+
             </tr>
         </thead>
         <tbody>
@@ -93,6 +95,8 @@
                 <td>{{ gs.arrival_time }}</td>
                 <td>{{ gs.departure_time }}</td>
                 <td>{% if gs.time_at_post %}{{ gs.time_at_post }}{% else %}-{% endif %}</td>
+                <td><a href="/scan/{{ gs.group.id }}" class="btn">Scan</a></td>
+
             </tr>
             {% endfor %}
         </tbody>
