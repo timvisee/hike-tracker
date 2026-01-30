@@ -10,6 +10,7 @@
     <p class="error">{{ error }}</p>
     {% endif %}
     <form action="/login" method="post">
+        <input type="hidden" name="next" value="{{ next | default(value='/') }}">
         <div>
             <label for="password">Wachtwoord</label>
             <input type="password" id="password" name="password" required placeholder="Admin of post wachtwoord">

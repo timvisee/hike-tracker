@@ -18,7 +18,7 @@
         <a href="/post/{{ holder_post_id }}">Mijn Post</a>
         <a href="/logout" style="margin-left: auto;">Uitloggen</a>
         {% else %}
-        <a href="/login" style="margin-left: auto;">Inloggen</a>
+        <a href="/login{% if current_path %}?next={{ current_path | urlencode }}{% endif %}" style="margin-left: auto;">Inloggen</a>
         {% endif %}
     </nav>
     <div class="container">

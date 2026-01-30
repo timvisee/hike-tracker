@@ -11,6 +11,7 @@ use crate::models::Post;
 #[derive(FromForm)]
 pub struct LoginForm {
     password: String,
+    next: String,
 }
 
 #[get("/login")]
@@ -19,13 +20,13 @@ pub fn login_page(_admin: Admin) -> Redirect {
     Redirect::to("/admin/groups")
 }
 
-#[get("/login", rank = 2)]
-pub fn login_form(cookies: &CookieJar<'_>) -> Result<Redirect, Template> {
+#[get("/login?<next>", rank = 2)]
+pub fn login_form(cookies: &CookieJar<'_>, next: Option<String>) -> Result<Redirect, Template> {
     // Check if logged in as post holder
     if let Some(AuthSession::PostHolder { post_id }) = auth::get_current_auth(cookies) {
         return Ok(Redirect::to(format!("/post/{}", post_id)));
     }
-    Err(Template::render("login", context! { is_admin: false }))
+    Err(Template::render("login", context! { is_admin: false, next: next }))
 }
 
 #[post("/login", data = "<form>")]
@@ -35,11 +36,12 @@ pub async fn login(
     form: Form<LoginForm>,
 ) -> Result<Redirect, Template> {
     let password = form.password.clone();
+    let next = if form.next.starts_with('/') { form.next.clone() } else { "/".to_string() };
 
     // First, check if it's the admin password
     if auth::check_admin_password(&password) {
         auth::login_admin(cookies);
-        return Ok(Redirect::to("/admin/groups"));
+        return Ok(Redirect::to(next));
     }
 
     // Then, check if it matches any post's password
@@ -51,7 +53,7 @@ pub async fn login(
 
     if let Some(post) = post {
         auth::login_post_holder(cookies, post.id.clone());
-        return Ok(Redirect::to(format!("/post/{}", post.id)));
+        return Ok(Redirect::to(next));
     }
 
     // Invalid password
