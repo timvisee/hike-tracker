@@ -39,11 +39,6 @@ pub async fn post_overview(
     let mut groups_coming = Vec::new();
 
     for group in all_groups {
-        // Skip groups that haven't started yet
-        if group.start_time.is_none() {
-            continue;
-        }
-
         // Check if this group has a scan at this post
         let scan = scans.iter().find(|s| s.group_id == group.id).cloned();
 
