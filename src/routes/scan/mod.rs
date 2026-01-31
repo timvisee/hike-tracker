@@ -33,7 +33,7 @@ pub fn get_scout_groups() -> Vec<String> {
         .collect()
 }
 
-fn get_next_action(group: &Group, posts: &[Post], scans: &[Scan]) -> Option<NextAction> {
+fn get_next_admin_action(group: &Group) -> Option<NextAction> {
     // If group is finished, no next action
     if group.finish_time.is_some() {
         return None;
@@ -47,35 +47,10 @@ fn get_next_action(group: &Group, posts: &[Post], scans: &[Scan]) -> Option<Next
         });
     }
 
-    // Check each post in order
-    for post in posts {
-        let scan = scans.iter().find(|s| s.post_id == post.id);
-        match scan {
-            None => {
-                // No scan for this post, next action is arrive
-                return Some(NextAction {
-                    action_id: format!("ARRIVE_{}", post.id),
-                    label: format!("Aankomst bij Post {}: {}", post.post_order, post.name),
-                });
-            }
-            Some(s) if s.departure_time.is_none() => {
-                // At this post, next action is leave
-                return Some(NextAction {
-                    action_id: format!("LEAVE_{}", post.id),
-                    label: format!("Vertrek van Post {}: {}", post.post_order, post.name),
-                });
-            }
-            Some(_) => {
-                // Completed this post, check next
-                continue;
-            }
-        }
-    }
-
     // All posts completed, next action is stop timer
     Some(NextAction {
         action_id: "__STOP_TIMER__".to_string(),
-        label: "Stop Timer".to_string(),
+        label: "Finish groepje, stop de tijd!".to_string(),
     })
 }
 
@@ -139,7 +114,7 @@ pub async fn scan_page(
         .await
         .unwrap_or_default();
 
-    let next_action = get_next_action(&group, &posts, &scans);
+    let next_action = get_next_admin_action(&group);
     let stats = calculate_group_stats(&group, &scans, posts.clone());
     let emergency_info = std::env::var("EMERGENCY_INFO").ok();
 
