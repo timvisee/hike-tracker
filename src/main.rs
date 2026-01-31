@@ -2,6 +2,7 @@
 extern crate rocket;
 
 mod auth;
+mod cache;
 mod db;
 mod models;
 mod routes;
@@ -37,6 +38,7 @@ fn rocket() -> _ {
             },
         ))
         .attach(Template::fairing())
+        .attach(cache::StaticCache)
         .mount("/", routes![index])
         .mount("/", routes::auth::routes())
         .mount("/admin/posts", routes::admin::posts::routes())
