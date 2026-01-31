@@ -49,15 +49,15 @@ impl<'r> FromRequest<'r> for AnyAuth {
     }
 }
 
-pub struct CurrentPath(pub String);                                                                                                                                  
-                                                                                                                                                                    
-#[rocket::async_trait]                                                                                                                                               
-impl<'r> FromRequest<'r> for CurrentPath {                                                                                                                           
-    type Error = ();                                                                                                                                                 
-    async fn from_request(req: &'r Request<'_>) -> Outcome<Self, ()> {                                                                                       
-        Outcome::Success(CurrentPath(req.uri().path().to_string()))                                                                                                  
-    }                                                                                                                                                                
-} 
+pub struct CurrentPath(pub String);
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for CurrentPath {
+    type Error = ();
+    async fn from_request(req: &'r Request<'_>) -> Outcome<Self, ()> {
+        Outcome::Success(CurrentPath(req.uri().path().to_string()))
+    }
+}
 
 fn get_auth_session(cookies: &CookieJar<'_>) -> Option<AuthSession> {
     cookies

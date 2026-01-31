@@ -8,7 +8,7 @@ use rocket::Route;
 use rocket_dyn_templates::{context, Template};
 use serde::Serialize;
 
-use crate::auth::{AnyAuth, CurrentPath, get_auth_context};
+use crate::auth::{get_auth_context, AnyAuth, CurrentPath};
 use crate::db::DbConn;
 use crate::models::{Group, NewGroup, NewScan, Post, Scan};
 use crate::stats::calculate_group_stats;
@@ -80,7 +80,12 @@ fn get_next_action(group: &Group, posts: &[Post], scans: &[Scan]) -> Option<Next
 }
 
 #[get("/<group_id>")]
-pub async fn scan_page(cookies: &CookieJar<'_>, conn: DbConn, group_id: String, path: CurrentPath) -> Template {
+pub async fn scan_page(
+    cookies: &CookieJar<'_>,
+    conn: DbConn,
+    group_id: String,
+    path: CurrentPath,
+) -> Template {
     let auth_ctx = get_auth_context(cookies);
     let is_admin = auth_ctx.is_admin;
     let is_post_holder = auth_ctx.is_post_holder;

@@ -26,7 +26,10 @@ pub fn login_form(cookies: &CookieJar<'_>, next: Option<String>) -> Result<Redir
     if let Some(AuthSession::PostHolder { post_id }) = auth::get_current_auth(cookies) {
         return Ok(Redirect::to(format!("/post/{}", post_id)));
     }
-    Err(Template::render("login", context! { is_admin: false, next: next }))
+    Err(Template::render(
+        "login",
+        context! { is_admin: false, next: next },
+    ))
 }
 
 #[post("/login", data = "<form>")]
@@ -36,7 +39,11 @@ pub async fn login(
     form: Form<LoginForm>,
 ) -> Result<Redirect, Template> {
     let password = form.password.clone();
-    let next = if form.next.starts_with('/') { form.next.clone() } else { "/".to_string() };
+    let next = if form.next.starts_with('/') {
+        form.next.clone()
+    } else {
+        "/".to_string()
+    };
 
     // First, check if it's the admin password
     if auth::check_admin_password(&password) {
