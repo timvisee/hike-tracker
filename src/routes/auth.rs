@@ -24,7 +24,7 @@ pub fn login_page(_admin: Admin) -> Redirect {
 pub fn login_form(cookies: &CookieJar<'_>, next: Option<String>) -> Result<Redirect, Template> {
     // Check if logged in as post holder
     if let Some(AuthSession::PostHolder { post_id }) = auth::get_current_auth(cookies) {
-        return Ok(Redirect::to(format!("/post/{}", post_id)));
+        return Ok(Redirect::to(format!("/post/{post_id}")));
     }
     Err(Template::render(
         "login",

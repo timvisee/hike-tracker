@@ -62,8 +62,8 @@ pub async fn create_post(_admin: Admin, conn: DbConn, form: Form<NewPostForm>) -
             Post::insert(c, post)
         })
         .await;
-    if let Err(e) = result {
-        eprintln!("Failed to create post: {}", e);
+    if let Err(err) = result {
+        eprintln!("Failed to create post: {err}");
     }
 
     Redirect::to("/admin/posts")

@@ -25,13 +25,13 @@ pub async fn delete_group(_admin: Admin, conn: DbConn, id: String) -> Redirect {
 #[get("/new")]
 pub fn new_group(_admin: Admin) -> Redirect {
     let short_id = &Uuid::new_v4().to_string()[..8];
-    Redirect::to(format!("/scan/{}", short_id))
+    Redirect::to(format!("/scan/{short_id}"))
 }
 
 #[get("/<id>/qr")]
 pub fn group_qr(_admin: Admin, id: &str) -> (ContentType, Vec<u8>) {
     // TODO: Hardcoded url
-    let url = format!("https://hike.qvdijk.nl/scan/{}", id);
+    let url = format!("https://hike.qvdijk.nl/scan/{id}");
 
     let code = QrCode::new(url.as_bytes()).unwrap();
     let image = code.render::<Luma<u8>>().min_dimensions(200, 200).build();

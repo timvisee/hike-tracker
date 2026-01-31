@@ -92,7 +92,7 @@ pub async fn update_scan(
 
         if let Some(scan) = scan {
             if &scan.post_id != holder_post_id {
-                return Redirect::to(format!("/scan/{}/edit", group_id));
+                return Redirect::to(format!("/scan/{group_id}/edit"));
             }
         }
     }
@@ -122,7 +122,7 @@ pub async fn update_scan(
         }
     }
 
-    Redirect::to(format!("/scan/{}/edit", group_id))
+    Redirect::to(format!("/scan/{group_id}/edit"))
 }
 
 #[get("/<group_id>/edit/scan/<scan_id>/delete")]
@@ -143,13 +143,13 @@ pub async fn delete_scan(
 
         if let Some(scan) = scan {
             if &scan.post_id != holder_post_id {
-                return Redirect::to(format!("/scan/{}/edit", group_id));
+                return Redirect::to(format!("/scan/{group_id}/edit"));
             }
         }
     }
 
     conn.run(move |c| Scan::delete(c, &scan_id)).await.ok();
-    Redirect::to(format!("/scan/{}/edit", group_id))
+    Redirect::to(format!("/scan/{group_id}/edit"))
 }
 
 #[derive(FromForm)]
@@ -169,7 +169,7 @@ pub async fn add_scan(
     // Post holders can only add scans for their assigned post
     if let Some(ref holder_post_id) = auth.post_id {
         if &form.post_id != holder_post_id {
-            return Redirect::to(format!("/scan/{}/edit", group_id));
+            return Redirect::to(format!("/scan/{group_id}/edit"));
         }
     }
 
@@ -196,7 +196,7 @@ pub async fn add_scan(
         .ok();
     }
 
-    Redirect::to(format!("/scan/{}/edit", group_id))
+    Redirect::to(format!("/scan/{group_id}/edit"))
 }
 
 #[derive(FromForm)]
@@ -248,7 +248,7 @@ pub async fn update_group(
         }
     }
 
-    Redirect::to(format!("/scan/{}/edit", group_id))
+    Redirect::to(format!("/scan/{group_id}/edit"))
 }
 
 #[derive(FromForm)]
@@ -281,12 +281,12 @@ pub async fn update_group_details(
 
     let group = match group {
         Some(g) => g,
-        None => return Redirect::to(format!("/scan/{}", group_id)),
+        None => return Redirect::to(format!("/scan/{group_id}")),
     };
 
     // Only admin can edit details of started groups
     if group.start_time.is_some() && !is_admin {
-        return Redirect::to(format!("/scan/{}", group_id));
+        return Redirect::to(format!("/scan/{group_id}"));
     }
 
     let gid = group_id.clone();
@@ -319,15 +319,15 @@ pub async fn update_group_details(
         conn.run(move |c| Group::set_start_time(c, &gid, now))
             .await
             .ok();
-        return Redirect::to(format!("/scan/{}", group_id));
+        return Redirect::to(format!("/scan/{group_id}"));
     }
 
     // For unstarted groups, redirect back to the scan page (shows the edit form again)
     // For started groups (admin), redirect to the edit page
     if group.start_time.is_none() {
-        Redirect::to(format!("/scan/{}", group_id))
+        Redirect::to(format!("/scan/{group_id}"))
     } else {
-        Redirect::to(format!("/scan/{}/edit", group_id))
+        Redirect::to(format!("/scan/{group_id}/edit"))
     }
 }
 
